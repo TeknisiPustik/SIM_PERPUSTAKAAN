@@ -2,11 +2,21 @@
 @section('body')
 <body>
     
-
+<style>
+    table tr td{
+        padding: 8px;
+    }
+    table {
+        border: 1px solid #959494;
+    }
+    table tr th{
+        background-color: #bcbcc0;
+    }
+</style>
     <h2 class="text-center">DATA BUKU</h2>
     <div class="container">
-    <button id="myButton" type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal"><i class="fa fa-plus-circle" aria-hidden="true"></i>Tambah</button>
-    <table id="tes" border=1>
+    <button id="myButton" type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal" style="margin-bottom:20px;"><i class="fa fa-plus-circle" aria-hidden="true"></i>Tambah</button>
+    <table id="tes" border="1" style="width:100%;">
                     
     </table>
     </div>
@@ -85,7 +95,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="btnUpdate()" data-no_panggil="">Save changes</button>
+                <button type="button" class="btn btn-primary" onclick="btnUpdate()" data-no_panggil="" id="btnUpdate">Save changes</button>
             </div>
             </div>
         </div>
@@ -103,15 +113,36 @@
                         url: "<?= config('webservice.backend') . '/api/view' ?>",
                         // data: { myData: 'This is my data.' },  // data to submit
                         success: function (data,status,xhr) {   // success callback function
-                            console.log(data)
+                            $("#tes").append(`
+                                   
+                                   <tr style="text-align:center;">
+                                    <th>Image</th>
+                                    <th>Bahasa</th>
+                                    <th>Deskripsi Fisik</th>
+                                    <th>Edisi</th>
+                                    <th>ISBN</th>
+                                    <th>Judul</th>
+                                    <th>Nama Pengarang</th>
+                                    <th>No Panggil</th>
+                                    <th>Penerbit</th>
+                                    <th>Action</th>
+                                   </tr>
+                                `)
                             for(i in data['buku']){
                                 $("#tes").append(`
                                    
                                    <tr>
+                                    <td><img src="${data['buku'][i].sampul}" style="width:100px;height:100px;"></img></td>
                                     <td>${data['buku'][i].bahasa}</td>
-                                    <td>${data['buku'][i].des_buku}</td>
-                                    <td><button name="editButton" data-no_panggil="${data['buku'][i].no_panggil}">Edit</button>
-                                    <button data-no_panggil="${data['buku'][i].no_panggil}">Delete</button></td>
+                                    <td>${data['buku'][i].des_fisik}</td>
+                                    <td>${data['buku'][i].edisi}</td>
+                                    <td>${data['buku'][i].isbn_issn}</td>
+                                    <td>${data['buku'][i].judul}</td>
+                                    <td>${data['buku'][i].nama_pengarang}</td>
+                                    <td>${data['buku'][i].no_panggil}</td>
+                                    <td>${data['buku'][i].penerbit}</td>
+                                    <td><button name="editButton" class="btn btn-warning mb-2" data-no_panggil="${data['buku'][i].no_panggil}"><i class="fa fa-edit"></i> Edit</button>
+                                    <button name="deleteButton" class="btn btn-danger" data-no_panggil="${data['buku'][i].no_panggil}"><i class="fa fa-trash"></i> Delete</button></td>
                                    
                                    </tr>
                                 `)
@@ -134,16 +165,34 @@
                                     console.log(data)
                                     $("#no_panggil_edit").val(data['buku'][0].no_panggil)
                                     $("#judul_buku_edit").val(data['buku'][0].judul)
-                                    $("#pengarang_edit").val(data['buku'][0].pengarang)
+                                    $("#pengarang_edit").val(data['buku'][0].nama_pengarang)
                                     $("#penerbit_edit").val(data['buku'][0].penerbit)
-                                    $("#deskripsi_fisik_edit").val(data['buku'][0].deskripsi_fisik)
+                                    $("#deskripsi_fisik_edit").val(data['buku'][0].des_fisik)
                                     $("#bahasa_edit").val(data['buku'][0].bahasa)
                                     $("#isbn_issn_edit").val(data['buku'][0].isbn_issn)
                                     $("#edisi_edit").val(data['buku'][0].edisi)
-                                    $("#deskripsi_buku_edit").val(data['buku'][0].deskripsi_buku)
+                                    $("#deskripsi_buku_edit").val(data['buku'][0].des_buku)
                                     $("#sampul_edit").val(data['buku'][0].sampul)
                                     $("#tahun_terbit_edit").val(data['buku'][0].tahun_terbit)
+                                    $("#btnUpdate").attr('data-no_panggil',data['buku'][0].no_panggil)
                                     $('#editdatabuku').modal('show');
+                                },
+                                error: function (jqXhr, textStatus, errorMessage) { // error callback 
+                                    console.log("error")
+                                }
+                            });
+                    })
+
+
+                    $(document).on('click', 'button[name="deleteButton"]', function(){
+                        let no_panggil = $(this).data('no_panggil')
+
+                        $.ajax( 
+                            {
+                                url: `<?= config('webservice.backend') . '/api/delete/' ?>${no_panggil}`,
+                                method: 'DELETE',
+                                success: function (data,status,xhr) {   // success callback function
+                                    location.reload();
                                 },
                                 error: function (jqXhr, textStatus, errorMessage) { // error callback 
                                     console.log("error")
@@ -184,8 +233,8 @@
                     function btnUpdate(){
                         $.ajax( 
                         {
-                            url: "<?= config('webservice.backend') . '/api/update' ?>",
-                            method: "POST",
+                            url: "<?= config('webservice.backend') . '/api/update/' ?>"+$("#btnUpdate").attr('data-no_panggil'),
+                            method: "PUT",
                             data: { 
                                 no_panggil: $("#no_panggil_edit").val(),
                                 judul_buku: $("#judul_buku_edit").val(),
@@ -200,7 +249,7 @@
                               
                             },  // data to submit
                             success: function (data,status,xhr) {   // success callback function
-                                console.log(data)
+                                location.reload();
 
                             },
                             error: function (jqXhr, textStatus, errorMessage) { // error callback 
